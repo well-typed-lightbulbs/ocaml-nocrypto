@@ -16,6 +16,8 @@ let fs   = Conf.(key "freestanding" bool ~absent:false
                  ~doc:"Build Mirage/Solo5 support.")
 let mir  = Conf.(key "mirage" bool ~absent:false
                   ~doc:"Build Mirage support.")
+let gmp = Conf.(key "gmp" string ~absent:"-I." ~doc:"GMP include path for non-accelerated 32bit arch.")
+
 let accelerate = Conf.(discovered_key "accelerate" bool
   ~absent:(fun () -> match Cpuid.supports cpuflags with
                      | Ok r -> Ok r | Error _ -> Ok false)
@@ -32,7 +34,8 @@ let opams =
   in [Pkg.opam_file "opam" ~lint_deps_excluding:(Some (build @ hacks))]
 
 let cmd c os files =
-  OS.Cmd.run Cmd.(build_cmd c os %% Pkg.ocb_bool_tags c tags %% of_list files)
+  let cflag = "-ccopt="^(Conf.value c gmp) in
+  OS.Cmd.run Cmd.(build_cmd c os %% Pkg.ocb_bool_tags c tags %% of_list files % "-cflag" % cflag)
 
 let build = Pkg.build ~cmd ()
 
